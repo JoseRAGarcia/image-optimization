@@ -85,7 +85,7 @@ public class ImageOptimizationService {
                 display(bufferedImage, "Convertido para JPEG");
             }
 
-            bufferedImage = crop(bufferedImage, 0.2);
+            bufferedImage = crop(bufferedImage, 0);
             display(bufferedImage, "Cropped");
 
             bufferedImage = resize(bufferedImage);
