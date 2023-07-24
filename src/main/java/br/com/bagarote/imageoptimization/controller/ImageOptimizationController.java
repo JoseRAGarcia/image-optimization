@@ -1,5 +1,6 @@
 package br.com.bagarote.imageoptimization.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class ImageOptimizationController {
     }
 
     @PostMapping("/image")
-    public ResponseEntity<Image> create(@RequestBody ImageRequestDTO imageBase64) {
+    public ResponseEntity<Image> create(@RequestBody ImageRequestDTO imageBase64) throws IOException {
         return imageOptimizationService.create(imageBase64);
     }
 }
