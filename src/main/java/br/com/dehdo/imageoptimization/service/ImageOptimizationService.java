@@ -29,12 +29,14 @@ import br.com.dehdo.imageoptimization.model.Image;
 import br.com.dehdo.imageoptimization.model.dto.request.ImageRequestDTO;
 import br.com.dehdo.imageoptimization.repository.ImageRepository;
 import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.filters.Canvas;
 import net.coobird.thumbnailator.geometry.Positions;
 
 @Service
 public class ImageOptimizationService {
     // imagem alta cropada jpg no banco; ok
-    // imagem alta cropada c/ marca d'agua menor tamanho possível em kb webp na web; ok
+    // imagem alta cropada c/ marca d'agua menor tamanho possível em kb webp na web;
+    // ok
     // imagem baixa full webp na web; ok
     // imagem baixa proporcionalizada webp na web; ok
 
@@ -95,7 +97,7 @@ public class ImageOptimizationService {
         }
 
         if (bufferedImage != null) {
-           // display(bufferedImage, "Original " + format);
+            display(bufferedImage, "Original " + format);
 
             if (!format.equals("JPEG")) {
                 bufferedImage = convertImage(bufferedImage, "jpg");
@@ -104,19 +106,19 @@ public class ImageOptimizationService {
             bufferedImage = crop(bufferedImage, 0.03);
 
             imagemAltaJpg = resize(bufferedImage, 600, 900);
-           // display(bufferedImage, "Alta");
+            display(imagemAltaJpg, "Alta");
 
             imageAltaWebp = getNewImage(imagemAltaJpg);
             imageAltaWebp = createAltaWebp(imageAltaWebp);
-           // display(imageAltaWebp, "Alta com Marca Dagua");
+            display(imageAltaWebp, "Alta com Marca Dagua");
 
             imageBaixaFullWebp = getNewImage(imagemAltaJpg);
             imageBaixaFullWebp = createBaixaFullWebp(imageBaixaFullWebp);
-           // display(imageBaixaFullWebp, "Baixa Full");
+            display(imageBaixaFullWebp, "Baixa Full");
 
             imageBaixaProporcionalWebp = getNewImage(imagemAltaJpg);
             imageBaixaProporcionalWebp = createBaixaProporcionalWebp(imageBaixaProporcionalWebp);
-           // display(imageBaixaProporcionalWebp, "Baixa Proporcional");
+            display(imageBaixaProporcionalWebp, "Baixa Proporcional");
         }
 
         Image img = new Image();
@@ -169,8 +171,17 @@ public class ImageOptimizationService {
 
     public static BufferedImage convertImage(BufferedImage bufferedImage, String format) {
         try {
-            return Thumbnails.of(bufferedImage)
-                    .outputFormat(format).scale(1.0).outputQuality(1.0f).asBufferedImage();
+            BufferedImage newBufferedImage = new BufferedImage(
+                    bufferedImage.getWidth(),
+                    bufferedImage.getHeight(),
+                    BufferedImage.TYPE_INT_BGR);
+
+            newBufferedImage.createGraphics()
+                    .drawImage(bufferedImage, 0, 0, Color.white, null);
+
+            return Thumbnails.of(newBufferedImage)
+                    .outputFormat(format).scale(1.0)
+                    .outputQuality(1.0f).asBufferedImage();
         } catch (Exception e) {
             // TODO: handle exception
             return null;
