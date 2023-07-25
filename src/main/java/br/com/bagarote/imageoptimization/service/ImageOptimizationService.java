@@ -34,8 +34,7 @@ import net.coobird.thumbnailator.geometry.Positions;
 @Service
 public class ImageOptimizationService {
     // imagem alta cropada jpg no banco; ok
-    // imagem alta cropada c/ marca d'agua menor tamanho possível em kb webp na web;
-    // ok
+    // imagem alta cropada c/ marca d'agua menor tamanho possível em kb webp na web; ok
     // imagem baixa full webp na web; ok
     // imagem baixa proporcionalizada webp na web; ok
 
