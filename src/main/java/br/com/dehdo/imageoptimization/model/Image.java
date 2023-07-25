@@ -1,6 +1,5 @@
-package br.com.bagarote.imageoptimization.model;
+package br.com.dehdo.imageoptimization.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
@@ -20,22 +19,18 @@ public class Image {
 
     @NotNull
     @Column(length = 5000, name = "imagem_alta_jpg")
-    //@JsonIgnore
     private byte[] imagemAltaJpg;
 
     @NotNull
     @Column(length = 5000, name = "imagem_alta_webp")
-    //@JsonIgnore
     private byte[] imagemAltaWebp;
 
     @NotNull
     @Column(length = 5000, name = "imagem_baixa_full_webp")
-   // @JsonIgnore
     private byte[] imagemBaixaFullWebp;
 
     @NotNull
     @Column(length = 5000, name = "imagem_baixa_proporcional_webp")
-    //@JsonIgnore
     private byte[] imagemBaixaProporcionalWebp;
 
     public byte[] getImagemAltaJpg() {

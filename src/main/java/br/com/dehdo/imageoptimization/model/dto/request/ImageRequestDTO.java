@@ -1,4 +1,4 @@
-package br.com.bagarote.imageoptimization.model.dto.request;
+package br.com.dehdo.imageoptimization.model.dto.request;
 
 import java.io.Serializable;
 

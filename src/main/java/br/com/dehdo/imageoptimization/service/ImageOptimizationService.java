@@ -1,4 +1,4 @@
-package br.com.bagarote.imageoptimization.service;
+package br.com.dehdo.imageoptimization.service;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -25,9 +25,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import br.com.bagarote.imageoptimization.model.Image;
-import br.com.bagarote.imageoptimization.model.dto.request.ImageRequestDTO;
-import br.com.bagarote.imageoptimization.repository.ImageRepository;
+import br.com.dehdo.imageoptimization.model.Image;
+import br.com.dehdo.imageoptimization.model.dto.request.ImageRequestDTO;
+import br.com.dehdo.imageoptimization.repository.ImageRepository;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
 

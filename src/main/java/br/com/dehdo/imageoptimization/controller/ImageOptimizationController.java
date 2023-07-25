@@ -1,4 +1,4 @@
-package br.com.bagarote.imageoptimization.controller;
+package br.com.dehdo.imageoptimization.controller;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.bagarote.imageoptimization.model.Image;
-import br.com.bagarote.imageoptimization.model.dto.request.ImageRequestDTO;
-import br.com.bagarote.imageoptimization.service.ImageOptimizationService;
+import br.com.dehdo.imageoptimization.model.Image;
+import br.com.dehdo.imageoptimization.model.dto.request.ImageRequestDTO;
+import br.com.dehdo.imageoptimization.service.ImageOptimizationService;
 
 @RestController
 @RequestMapping("/")
