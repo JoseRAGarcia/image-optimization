@@ -1,11 +1,7 @@
 package br.com.bagarote.imageoptimization.service;
 
-import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,6 +18,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import org.apache.sanselan.ImageInfo;
+import org.apache.sanselan.Sanselan;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,11 +28,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import br.com.bagarote.imageoptimization.model.Image;
 import br.com.bagarote.imageoptimization.model.dto.request.ImageRequestDTO;
 import br.com.bagarote.imageoptimization.repository.ImageRepository;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 
 @Service
 public class ImageOptimizationService {
     // imagem alta cropada jpg no banco; ok
-    // imagem alta cropada c/ marca d'agua menor tamanho possível em kb webp na web; ok
+    // imagem alta cropada c/ marca d'agua menor tamanho possível em kb webp na web;
+    // ok
     // imagem baixa full webp na web; ok
     // imagem baixa proporcionalizada webp na web; ok
 
@@ -52,6 +53,7 @@ public class ImageOptimizationService {
 
         byte[] i = Base64.getDecoder().decode(originalImage.getImagem());
         BufferedImage bufferedImage = null;
+        BufferedImage imagemAltaJpg = null;
         BufferedImage imageAltaWebp = null;
         BufferedImage imageBaixaFullWebp = null;
         BufferedImage imageBaixaProporcionalWebp = null;
@@ -79,34 +81,50 @@ public class ImageOptimizationService {
             }
             // Teste de formato
 
+            if (!format.equals("WebP")) {
+                final ImageInfo imageInfo = Sanselan.getImageInfo(i);
+
+                System.out.println("INTENSIDADE DE BITS " + imageInfo.getBitsPerPixel());
+                System.out.println("WIDTH DPI " + imageInfo.getPhysicalWidthDpi());
+                System.out.println("HEIGHT DPI " + imageInfo.getPhysicalHeightDpi());
+                System.out.println("WIDTH " + imageInfo.getWidth());
+                System.out.println("HEIGHT " + imageInfo.getHeight());
+            }
+
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
 
         if (bufferedImage != null) {
+           // display(bufferedImage, "Original " + format);
+
             if (!format.equals("JPEG")) {
                 bufferedImage = convertImage(bufferedImage, "jpg");
             }
 
             bufferedImage = crop(bufferedImage, 0.03);
 
-            bufferedImage = resize(bufferedImage, 600, 900);
-            display(bufferedImage, "Alta JPEG");
+            imagemAltaJpg = resize(bufferedImage, 600, 900);
+           // display(bufferedImage, "Alta");
 
-            imageAltaWebp = getNewImage(bufferedImage);
+            imageAltaWebp = getNewImage(imagemAltaJpg);
             imageAltaWebp = createAltaWebp(imageAltaWebp);
-            display(imageAltaWebp, "Alta Webp");
+           // display(imageAltaWebp, "Alta com Marca Dagua");
 
-            imageBaixaFullWebp = getNewImage(bufferedImage);
+            imageBaixaFullWebp = getNewImage(imagemAltaJpg);
             imageBaixaFullWebp = createBaixaFullWebp(imageBaixaFullWebp);
-            display(imageBaixaFullWebp, "Baixa Full Webp");
+           // display(imageBaixaFullWebp, "Baixa Full");
 
-            imageBaixaProporcionalWebp = getNewImage(bufferedImage);
+            imageBaixaProporcionalWebp = getNewImage(imagemAltaJpg);
             imageBaixaProporcionalWebp = createBaixaProporcionalWebp(imageBaixaProporcionalWebp);
-            display(imageBaixaProporcionalWebp, "Baixa Proporcional Webp");
+           // display(imageBaixaProporcionalWebp, "Baixa Proporcional");
         }
 
         Image img = new Image();
+        img.setImagemAltaJpg(getByteArrayImage(imagemAltaJpg, "jpg"));
+        img.setImagemAltaWebp(getByteArrayImage(imageAltaWebp, "webp"));
+        img.setImagemBaixaFullWebp(getByteArrayImage(imageBaixaFullWebp, "webp"));
+        img.setImagemBaixaProporcionalWebp(getByteArrayImage(imageBaixaProporcionalWebp, "webp"));
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(img);
@@ -125,6 +143,19 @@ public class ImageOptimizationService {
         return newBufferedImage;
     }
 
+    public static byte[] getByteArrayImage(BufferedImage bufferedImage, String format) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            Thumbnails.of(bufferedImage)
+                    .outputFormat(format).scale(1.0).outputQuality(1.0f).toOutputStream(outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static void display(BufferedImage bufferedImage, String title) {
         JFrame frame = new JFrame();
         JLabel label = new JLabel();
@@ -138,35 +169,27 @@ public class ImageOptimizationService {
     }
 
     public static BufferedImage convertImage(BufferedImage bufferedImage, String format) {
-
-        BufferedImage newBufferedImage = getNewImage(bufferedImage);
-
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(newBufferedImage, format, baos);
-            baos.close();
-            baos.toByteArray();
-
-            ByteArrayInputStream in = new ByteArrayInputStream(baos.toByteArray());
-            return ImageIO.read(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return bufferedImage;
+            return Thumbnails.of(bufferedImage)
+                    .outputFormat(format).scale(1.0).outputQuality(1.0f).asBufferedImage();
+        } catch (Exception e) {
+            // TODO: handle exception
+            return null;
         }
     }
 
-    public static BufferedImage crop(BufferedImage source, double tolerance) {
+    public static BufferedImage crop(BufferedImage bufferedImage, double tolerance) {
         // Get our top-left pixel color as our "baseline" for cropping
-        int baseColor = source.getRGB(0, 0);
+        int baseColor = bufferedImage.getRGB(0, 0);
 
-        int width = source.getWidth();
-        int height = source.getHeight();
+        int width = bufferedImage.getWidth();
+        int height = bufferedImage.getHeight();
 
         int topY = Integer.MAX_VALUE, topX = Integer.MAX_VALUE;
         int bottomY = -1, bottomX = -1;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if (colorWithinTolerance(baseColor, source.getRGB(x, y), tolerance)) {
+                if (colorWithinTolerance(baseColor, bufferedImage.getRGB(x, y), tolerance)) {
                     if (x < topX)
                         topX = x;
                     if (y < topY)
@@ -180,9 +203,9 @@ public class ImageOptimizationService {
         }
 
         BufferedImage destination = new BufferedImage((bottomX - topX + 1),
-                (bottomY - topY + 1), BufferedImage.TYPE_INT_ARGB);
+                (bottomY - topY + 1), bufferedImage.getType());
 
-        destination.getGraphics().drawImage(source, 0, 0,
+        destination.getGraphics().drawImage(bufferedImage, 0, 0,
                 destination.getWidth(), destination.getHeight(),
                 topX, topY, bottomX, bottomY, null);
 
@@ -213,78 +236,44 @@ public class ImageOptimizationService {
     }
 
     public static BufferedImage resize(BufferedImage bufferedImage, int maxWidth, int maxHeight) {
-        BufferedImage scaledImage = null;
-        double scaleFactor = 0;
+        try {
+            return Thumbnails.of(bufferedImage).size(maxWidth, maxHeight)
+                    .outputFormat("jpg").outputQuality(1.0f).asBufferedImage();
 
-        if (bufferedImage.getWidth() > bufferedImage.getHeight() && bufferedImage.getWidth() > maxWidth) {
-            scaleFactor = (double) maxWidth / bufferedImage.getWidth();
-            scaledImage = new BufferedImage(maxWidth, (int) (scaleFactor * bufferedImage.getHeight()),
-                    BufferedImage.TYPE_INT_ARGB);
-        } else if (bufferedImage.getWidth() < bufferedImage.getHeight() && bufferedImage.getHeight() > maxHeight) {
-            scaleFactor = (double) maxHeight / bufferedImage.getHeight();
-            scaledImage = new BufferedImage((int) (scaleFactor * bufferedImage.getWidth()), maxHeight,
-                    BufferedImage.TYPE_INT_ARGB);
-        } else if (bufferedImage.getWidth() == bufferedImage.getHeight() && bufferedImage.getWidth() > maxWidth) {
-            scaleFactor = (double) maxWidth / bufferedImage.getWidth();
-            scaledImage = new BufferedImage(maxWidth, maxWidth,
-                    BufferedImage.TYPE_INT_ARGB);
-        } else {
-            return bufferedImage;
+        } catch (Exception e) {
+            // TODO: handle exception
+            return null;
         }
-
-        AffineTransform at = new AffineTransform();
-        at.scale(scaleFactor, scaleFactor);
-        AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-        return scaleOp.filter(bufferedImage, scaledImage);
     }
 
     public static BufferedImage createAltaWebp(BufferedImage bufferedImage) {
-        BufferedImage newBufferedImage = addWaterMark(bufferedImage);
-        return convertImage(newBufferedImage, "webp");
+        return addWaterMark(bufferedImage);
     }
 
     public static BufferedImage createBaixaFullWebp(BufferedImage bufferedImage) {
-        BufferedImage newBufferedImage = convertImage(bufferedImage, "webp");
-        return resize(newBufferedImage, 160, 180);
+        return resize(bufferedImage, 160, 188);
     }
 
     public static BufferedImage createBaixaProporcionalWebp(BufferedImage bufferedImage) {
         // TODO - Realizar cálculo de maxWidth e maxHeight baseado em inputs de tamanho
         // em milímetros
-        BufferedImage newBufferedImage = convertImage(bufferedImage, "webp");
-        return resize(newBufferedImage, 160, 188);
+        return resize(bufferedImage, 160, 188);
     }
 
     public static BufferedImage addWaterMark(BufferedImage bufferedImage) {
         File watermark = new File("src/main/resources/static/watermark.png");
 
         try {
-            BufferedImage watermarkImage = ImageIO.read(watermark);
-
-            Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
-            AlphaComposite alphaChannel = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f);
-            g2d.setComposite(alphaChannel);
-
-            int topLeftX = (bufferedImage.getWidth() - watermarkImage.getWidth()) / 2;
-            int topLeftY = (bufferedImage.getHeight() - watermarkImage.getHeight()) / 2;
-
-            g2d.drawImage(watermarkImage, topLeftX, topLeftY, null);
-
-            BufferedImage newBufferedImage = getNewImage(bufferedImage);
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(newBufferedImage, "jpg", baos);
-            baos.close();
-            baos.toByteArray();
-            g2d.dispose();
-
-            ByteArrayInputStream in = new ByteArrayInputStream(baos.toByteArray());
-            return ImageIO.read(in);
+            return Thumbnails.of(bufferedImage)
+                    .scale(1.0)
+                    .watermark(Positions.CENTER, ImageIO.read(watermark), 0.3f)
+                    .outputQuality(1.0f)
+                    .asBufferedImage();
 
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-            return bufferedImage;
+            return null;
         }
     }
 }

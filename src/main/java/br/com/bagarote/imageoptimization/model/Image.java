@@ -20,22 +20,22 @@ public class Image {
 
     @NotNull
     @Column(length = 5000, name = "imagem_alta_jpg")
-    @JsonIgnore
+    //@JsonIgnore
     private byte[] imagemAltaJpg;
 
     @NotNull
     @Column(length = 5000, name = "imagem_alta_webp")
-    @JsonIgnore
+    //@JsonIgnore
     private byte[] imagemAltaWebp;
 
     @NotNull
     @Column(length = 5000, name = "imagem_baixa_full_webp")
-    @JsonIgnore
+   // @JsonIgnore
     private byte[] imagemBaixaFullWebp;
 
     @NotNull
     @Column(length = 5000, name = "imagem_baixa_proporcional_webp")
-    @JsonIgnore
+    //@JsonIgnore
     private byte[] imagemBaixaProporcionalWebp;
 
     public byte[] getImagemAltaJpg() {
